@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Text Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #2b6cb0;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 1.2rem;
+        }
+
+        .input-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 5px;
+            resize: vertical;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #4299e1;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .file-label:hover {
+            background: #3182ce;
+        }
+
+        .file-name {
+            margin-left: 1rem;
+            color: #718096;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #3182ce;
+        }
+
+        .results {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .result-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .result-card h2 {
+            color: #2b6cb0;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            background: #ebf8ff;
+            color: #2b6cb0;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .summary {
+            line-height: 1.8;
+            color: #4a5568;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #e53e3e;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .metrics-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        .accuracy-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Medical Text Analyzer</h1>
+            <p class="subtitle">Analyze medical texts for diseases, symptoms, and medicines</p>
+        </header>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="text">Enter Medical Text:</label>
+                <textarea id="text" placeholder="Paste your medical text here..."></textarea>
+            </div>
+
+            <div class="input-group">
+                <input type="file" id="file" class="file-input" accept=".pdf,.docx">
+                <label for="file" class="file-label">Upload PDF or DOCX</label>
+                <span class="file-name" id="fileName"></span>
+            </div>
+
+            <div class="button-group">
+                <button onclick="processText()">Analyze Text</button>
+                <button onclick="clearAll()">Clear All</button>
+            </div>
+
+            <div class="error" id="error"></div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing your text...</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="result-card">
+                <h2>Medical Tags</h2>
+                <div class="tags" id="tags"></div>
+            </div>
+
+            <div class="result-card">
+                <h2>Summary</h2>
+                <div class="summary" id="summary"></div>
+            </div>
+
+            <div class="metrics-card">
+                <h2>Analysis Metrics</h2>
+                <div class="chart-container">
+                    <canvas id="accuracyChart"></canvas>
+                </div>
+                <div class="accuracy-info">
+                    <p>Model confidence scores are shown above. These metrics represent the model's confidence in its predictions for different aspects of the analysis.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // File input handling
+        document.getElementById('file').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name;
+            document.getElementById('fileName').textContent = fileName || '';
+        });
+
+        // Process text
+        async function processText() {
+            const text = document.getElementById('text').value;
+            const file = document.getElementById('file').files[0];
+            
+            if (!text && !file) {
+                showError('Please enter text or upload a file');
+                return;
+            }
+
+            showLoading();
+            hideError();
+            hideResults();
+
+            const formData = new FormData();
+            if (file) {
+                formData.append('file', file);
+            } else {
+                formData.append('text', text);
+            }
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                console.log('Server response:', data); // Debug log
+
+                if (data.error) {
+                    showError(data.error);
+                } else if (data.tags && data.summary && data.metrics) {
+                    showResults(data);
+                } else {
+                    console.error('Invalid data format:', data); // Debug log
+                    showError('Invalid response format from server');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('An error occurred while processing your request. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Show results
+        function showResults(data) {
+            try {
+                console.log('Showing results for data:', data); // Debug log
+                
+                const tagsContainer = document.getElementById('tags');
+                const summaryContainer = document.getElementById('summary');
+
+                // Display tags
+                if (Array.isArray(data.tags)) {
+                    tagsContainer.innerHTML = data.tags.map(tag => 
+                        `<span class="tag">${tag}</span>`
+                    ).join('');
+                } else {
+                    console.error('Tags is not an array:', data.tags);
+                    throw new Error('Invalid tags format');
+                }
+
+                // Display summary
+                if (typeof data.summary === 'string') {
+                    summaryContainer.textContent = data.summary;
+                } else {
+                    console.error('Summary is not a string:', data.summary);
+                    throw new Error('Invalid summary format');
+                }
+
+                // Update accuracy chart with server-provided metrics
+                if (typeof data.metrics === 'object' && data.metrics !== null) {
+                    updateAccuracyChart(data.metrics);
+                } else {
+                    console.error('Metrics is not an object:', data.metrics);
+                    throw new Error('Invalid metrics format');
+                }
+
+                // Show results section
+                document.getElementById('results').style.display = 'block';
+            } catch (error) {
+                console.error('Error displaying results:', error);
+                showError('Error displaying results: ' + error.message);
+            }
+        }
+
+        // Clear all inputs and results
+        function clearAll() {
+            document.getElementById('text').value = '';
+            document.getElementById('file').value = '';
+            document.getElementById('fileName').textContent = '';
+            document.getElementById('results').style.display = 'none';
+            // Destroy chart when clearing
+            if (window.accuracyChart instanceof Chart) {
+                window.accuracyChart.destroy();
+                window.accuracyChart = null;
+            }
+            hideError();
+        }
+
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+        }
+
+        // Function to update accuracy chart
+        function updateAccuracyChart(metrics) {
+            try {
+                console.log('Updating chart with metrics:', metrics); // Debug log
+                
+                const ctx = document.getElementById('accuracyChart').getContext('2d');
+                
+                // Destroy existing chart if it exists
+                if (window.accuracyChart instanceof Chart) {
+                    window.accuracyChart.destroy();
+                }
+
+                const labels = Object.keys(metrics).map(key => 
+                    key.replace('_', ' ').toUpperCase()
+                );
+                const values = Object.values(metrics);
+
+                console.log('Chart data:', { labels, values }); // Debug log
+
+                window.accuracyChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Accuracy (%)',
+                            data: values,
+                            backgroundColor: [
+                                'rgba(66, 153, 225, 0.6)',
+                                'rgba(72, 187, 120, 0.6)',
+                                'rgba(237, 100, 166, 0.6)',
+                                'rgba(246, 173, 85, 0.6)'
+                            ],
+                            borderColor: [
+                                'rgba(66, 153, 225, 1)',
+                                'rgba(72, 187, 120, 1)',
+                                'rgba(237, 100, 166, 1)',
+                                'rgba(246, 173, 85, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Accuracy (%)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error updating chart:', error);
+                throw new Error('Failed to update accuracy chart: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html> 
